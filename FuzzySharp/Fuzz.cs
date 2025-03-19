@@ -5,7 +5,7 @@ using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 namespace FuzzySharp
 {
-    public static class Fuzz
+    public sealed class Fuzz
     {
         #region Ratio
         /// <summary>
