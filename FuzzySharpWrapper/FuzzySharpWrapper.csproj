@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+            <TargetFrameworks>net45;net46;net461</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+	<LangVersion>10.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FuzzySharp\FuzzySharp.csproj" />
+  </ItemGroup>
+
+</Project>

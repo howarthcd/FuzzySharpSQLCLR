@@ -1,62 +1,62 @@
-# FuzzySharp
-C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
-
-# Release Notes:
-v.2.0.0
-
-As of 2.0.0, all empty strings will return a score of 0. Prior, the partial scoring system would return a score of 100, regardless if the other input had correct value or not. This was a result of the partial scoring system returning an empty set for the matching blocks As a result, this led to incorrrect values in the composite scores; several of them (token set, token sort), relied on the prior value of empty strings.
-
-As a result, many 1.X.X unit test may be broken with the 2.X.X upgrade, but it is within the expertise fo all the 1.X.X developers to recommednd the upgrade to the 2.X.X series regardless, should their version accommodate it or not, as it is closer to the ideal behavior of the library.
-
+# FuzzySharpSQLCLR
+C# .NET fuzzy string matching implementation (by JakeBayer) of Seat Geek's well known python FuzzyWuzzy algorithm, with a SQL CLR wrapper for use in SQL Server.
 
 ## Usage
 
-Install-Package FuzzySharp
+* Ensure that CLR is enabled within SQL Server:
+```sql
+EXECUTE sp_configure 'clr enabled', 1;
+GO
+RECONFIGURE;
+GO
+```
+* Set the TRUSTWORTHY property of the target database to ON.
+* Execute the FuzzySharpWrapper/FuzzyWuzzy.sql against the target database to create the assemblies and scalar CLR functions.
 
 #### Simple Ratio
-```csharp
-Fuzz.Ratio("mysmilarstring","myawfullysimilarstirng")
-72
-Fuzz.Ratio("mysmilarstring","mysimilarstring")
-97
+```sql
+SELECT  dbo.fnFuzzyWuzzy_Ratio('mysmilarstring', 'myawfullysimilarstirng');
+/* 72 */
+SELECT  dbo.fnFuzzyWuzzy_Ratio('mysmilarstring', 'mysimilarstring');
+/* 97 */
 ```
 
 #### Partial Ratio
-```csharp
-Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring")
-71
+```sql
+SELECT  dbo.fnFuzzyWuzzy_PartialRatio('similar', 'somewhresimlrbetweenthisstring');
+/* 71 */
 ```
 
 #### Token Sort Ratio
-```csharp
-Fuzz.TokenSortRatio("order words out of","  words out of order")
-100
-Fuzz.PartialTokenSortRatio("order words out of","  words out of order")
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenSortRatio('order words out of', '  words out of order');
+/* 100 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenSortRatio('order words out of', '  words out of order'); 
+/* 100 */
 ```
 
 #### Token Set Ratio
-```csharp
-Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
-Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenSetRatio('fuzzy was a bear', 'fuzzy fuzzy fuzzy bear');
+/* 100 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenSetRatio('fuzzy was a bear', 'fuzzy fuzzy fuzzy bear');
+/* 100 */
 ```
 
 #### Token Initialism Ratio
-```csharp
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
-89
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics and Space Administration'););
+/* 89 */
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics Space Administration');
+/* 100 */
 
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-53
-Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-100
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899');
+/* 53 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenInitialismRatio('NASA', 'National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899');
+/* 100 */
 ```
 
-#### Token Abbreviation Ratio
+#### NOT IMPLEMENTED YET - Token Abbreviation Ratio
 ```csharp
 Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
 40
@@ -66,12 +66,12 @@ Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessM
 
 
 #### Weighted Ratio
-```csharp
-Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog")
-95
+```sql
+SELECT  dbo.fnFuzzyWuzzy_WeightedRatio('The quick brown fox jimps ofver the small lazy dog', 'the quick brown fox jumps over the small lazy dog'); 
+/* 95 */
 ```
 
-#### Process
+#### NOT IMPLEMENTED YET - Process
 ```csharp
 Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"})
 (string: Dallas Cowboys, score: 90, index: 3)
@@ -114,31 +114,7 @@ best: (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm
 ```
 
 ### FuzzySharp in Different Languages
-FuzzySharp was written with English in mind, and as such the Default string preprocessor only looks at English alphanumeric characters in the input strings, and will strip all others out. However, the `Extract` methods in the `Process` class do provide the option to specify your own string preprocessor. If this parameter is omitted, the Default will be used. However if you provide your own, the provided one will be used, so you are free to provide your own criteria for whatever character set you want to admit. For instance, using the parameter `(s) => s` will prevent the string from being altered at all before being run through the similarity algorithms.
-
-E.g.,
-
-```csharp
-var query = "strng";
-var choices = new [] { "stríng", "stráng", "stréng" };
-var results = Process.ExtractAll(query, choices, (s) => s);
-```
-The above will run the similarity algorithm on all the choices without stripping out the accented characters.
-
-### Using Different Scorers
-Scoring strategies are stateless, and as such should be static. However, in order to get them to share all the code they have in common via inheritance, making them static was not possible.
-Currently one way around having to new up an instance everytime you want to use one is to use the cache. This will ensure only one instance of each scorer ever exists.
-```csharp
-var ratio = ScorerCache.Get<DefaultRatioScorer>();
-var partialRatio = ScorerCache.Get<PartialRatioScorer>();
-var tokenSet = ScorerCache.Get<TokenSetScorer>();
-var partialTokenSet = ScorerCache.Get<PartialTokenSetScorer>();
-var tokenSort = ScorerCache.Get<TokenSortScorer>();
-var partialTokenSort = ScorerCache.Get<PartialTokenSortScorer>();
-var tokenAbbreviation = ScorerCache.Get<TokenAbbreviationScorer>();
-var partialTokenAbbreviation = ScorerCache.Get<PartialTokenAbbreviationScorer>();
-var weighted = ScorerCache.Get<WeightedRatioScorer>();
-```
+FuzzySharp was written with English in mind, and as such the Default string preprocessor only looks at English alphanumeric characters in the input strings, and will strip all others out.
 
 ## Credits
 
@@ -148,3 +124,4 @@ var weighted = ScorerCache.Get<WeightedRatioScorer>();
 - Mikko Ohtamaa (python-Levenshtein)
 - Antti Haapala (python-Levenshtein)
 - Panayiotis (Java implementation I heavily borrowed from)
+- JakeBayer (C# implementation)
