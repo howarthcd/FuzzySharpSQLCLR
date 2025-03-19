@@ -1,62 +1,62 @@
 # FuzzySharp
 C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
 
-# Release Notes:
-v.2.0.0
-
-As of 2.0.0, all empty strings will return a score of 0. Prior, the partial scoring system would return a score of 100, regardless if the other input had correct value or not. This was a result of the partial scoring system returning an empty set for the matching blocks As a result, this led to incorrrect values in the composite scores; several of them (token set, token sort), relied on the prior value of empty strings.
-
-As a result, many 1.X.X unit test may be broken with the 2.X.X upgrade, but it is within the expertise fo all the 1.X.X developers to recommednd the upgrade to the 2.X.X series regardless, should their version accommodate it or not, as it is closer to the ideal behavior of the library.
-
-
 ## Usage
 
-Install-Package FuzzySharp
+* Ensure that CLR is enabled within SQL Server:
+```sql
+EXECUTE sp_configure 'clr enabled', 1;
+GO
+RECONFIGURE;
+GO
+```
+* Set the TRUSTWORTHY property of the target database to ON.
+* Execute the FuzzySharpWrapper/FuzzyWuzzy.sql against the target database to create the assemblies and scalar CLR functions.
 
 #### Simple Ratio
-```csharp
-Fuzz.Ratio("mysmilarstring","myawfullysimilarstirng")
-72
-Fuzz.Ratio("mysmilarstring","mysimilarstring")
-97
+```sql
+SELECT  dbo.fnFuzzyWuzzy_Ratio('mysmilarstring', 'myawfullysimilarstirng');
+/* 72 */
+SELECT  dbo.fnFuzzyWuzzy_Ratio('mysmilarstring', 'mysimilarstring');
+/* 97 */
 ```
 
 #### Partial Ratio
-```csharp
-Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring")
-71
+```sql
+SELECT  dbo.fnFuzzyWuzzy_PartialRatio('similar', 'somewhresimlrbetweenthisstring');
+/* 71 */
 ```
 
 #### Token Sort Ratio
-```csharp
-Fuzz.TokenSortRatio("order words out of","  words out of order")
-100
-Fuzz.PartialTokenSortRatio("order words out of","  words out of order")
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenSortRatio('order words out of', '  words out of order');
+/* 100 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenSortRatio('order words out of', '  words out of order'); 
+/* 100 */
 ```
 
 #### Token Set Ratio
-```csharp
-Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
-Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenSetRatio('fuzzy was a bear', 'fuzzy fuzzy fuzzy bear');
+/* 100 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenSetRatio('fuzzy was a bear', 'fuzzy fuzzy fuzzy bear');
+/* 100 */
 ```
 
 #### Token Initialism Ratio
-```csharp
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
-89
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
-100
+```sql
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics and Space Administration'););
+/* 89 */
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics Space Administration');
+/* 100 */
 
-Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-53
-Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-100
+SELECT  dbo.fnFuzzyWuzzy_TokenInitialismRatio('NASA', 'National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899');
+/* 53 */
+SELECT  dbo.fnFuzzyWuzzy_PartialTokenInitialismRatio('NASA', 'National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899');
+/* 100 */
 ```
 
-#### Token Abbreviation Ratio
+#### NOT IMPLEMENTED YET - Token Abbreviation Ratio
 ```csharp
 Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
 40
@@ -66,12 +66,12 @@ Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessM
 
 
 #### Weighted Ratio
-```csharp
-Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog")
-95
+```sql
+SELECT  dbo.fnFuzzyWuzzy_WeightedRatio('The quick brown fox jimps ofver the small lazy dog', 'the quick brown fox jumps over the small lazy dog'); 
+/* 95 */
 ```
 
-#### Process
+#### NOT IMPLEMENTED YET - Process
 ```csharp
 Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"})
 (string: Dallas Cowboys, score: 90, index: 3)
