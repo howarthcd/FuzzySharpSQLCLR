@@ -1,5 +1,5 @@
-# FuzzySharp
-C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
+# FuzzySharpSQLCLR
+C# .NET fuzzy string matching implementation (by JakeBayer) of Seat Geek's well known python FuzzyWuzzy algorithm, with a SQL CLR wrapper for use in SQL Server.
 
 ## Usage
 
